@@ -9,7 +9,7 @@ import com.tejas.ai_task_manager.task.model.Status;
 import com.tejas.ai_task_manager.task.model.Task;
 import com.tejas.ai_task_manager.task.service.TaskService;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -18,26 +18,43 @@ public class TaskController {
 
     private final TaskService taskService;
 
+    // ✅ CREATE TASK
     @PostMapping
     public Task createTask(@RequestBody Task task) {
         return taskService.createTask(task);
     }
 
-    @GetMapping
-    public List<Task> getMyTasks() {
-        return taskService.getMyTasks();
+    // ✅ GET MY TASKS (Pagination + Sorting ready)
+    @GetMapping("/my-tasks")
+    public Page<Task> getMyTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) Status status){
+        return taskService.getMyTasks(page, size, status);
     }
 
+    // ✅ UPDATE STATUS (Only owner)
     @PutMapping("/{id}/status")
-    public Task updateStatus(@PathVariable Long id,
+    public Task updateStatus(
+            @PathVariable Long id,
             @RequestParam Status status) {
+
         return taskService.updateStatus(id, status);
     }
 
-   @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    // ✅ ASSIGN TASK (ADMIN / MANAGER only)
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @PutMapping("/{id}/assign")
-    public Task assignTask(@PathVariable Long id,
+    public Task assignTask(
+            @PathVariable Long id,
             @RequestParam String email) {
+
         return taskService.assignTask(id, email);
+    }
+
+    // ✅ DELETE TASK (ADMIN / MANAGER / OWNER)
+    @DeleteMapping("/{id}")
+    public Task deleteTask(@PathVariable Long id) {
+        return taskService.deleteTask(id);
     }
 }
