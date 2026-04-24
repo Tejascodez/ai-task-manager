@@ -56,8 +56,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
             "http://localhost:5173",   // Vite default
             "http://localhost:3000",   // CRA default
-            "https://ai-task-manager-1-jttr.onrender.com"  // your deployed frontend URL — update this
-        ));
+            "https://ai-task-manager-delta-sandy.vercel.app"));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
