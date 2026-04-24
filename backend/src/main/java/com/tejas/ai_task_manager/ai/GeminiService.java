@@ -80,8 +80,8 @@ public class GeminiService {
                             "No headings, no options. Task: " + title;
             return callGemini(prompt);
         } catch (Exception e) {
-            e.printStackTrace();        // ✅ Will now show real error in Render logs
-            return "Error generating description";
+                    return "ERROR: " + e.getClass().getName() + " | " + e.getMessage();// ✅ Will now show real error in Render logs
+            // return "Error generating description";
         }
     }
 
