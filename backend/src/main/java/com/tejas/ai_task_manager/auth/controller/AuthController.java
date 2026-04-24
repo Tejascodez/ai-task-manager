@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.tejas.ai_task_manager.auth.dto.LoginRequest;
 import com.tejas.ai_task_manager.auth.dto.RegisterRequest;
-import com.tejas.ai_task_manager.auth.service.AuthService;
 
 @RestController
 @RequestMapping("/auth")
