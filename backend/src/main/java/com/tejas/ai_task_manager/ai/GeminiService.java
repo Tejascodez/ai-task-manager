@@ -76,6 +76,7 @@ public class GeminiService {
 
     public String generateDescription(String title) {
         try {
+           System.out.println("Key being used: [" + apiKey + "]");
             String prompt = "Generate a short, clear, 1-2 line task description only. " +
                             "No headings, no options. Task: " + title;
             return callGemini(prompt);
