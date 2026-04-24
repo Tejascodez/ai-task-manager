@@ -293,10 +293,13 @@ export default function Dashboard() {
     }
   }, [token, navigate]);
 
-  useEffect(() => {
-    if (!token) { navigate("/login"); return; }
-    fetchTasks(page);
-  }, [page]);                       // re-fetch whenever page changes
+useEffect(() => {
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+  fetchTasks(page);
+}, [page, fetchTasks, navigate, token]);                 // re-fetch whenever page changes
 
   const goToPage = (next) => {
     if (next < 0 || (next > page && !hasMore)) return;
