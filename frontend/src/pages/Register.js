@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import BASE_URL from "../api/api";
 
 export default function Register() {
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "USER" });
+const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -333,7 +333,7 @@ const handleSubmit = async () => {
             </div>
 
             {/* Role — dev only */}
-            <div className="fade-up delay-5">
+            {/* <div className="fade-up delay-5">
               <label className="block text-slate-400 text-xs font-medium mb-1.5 ml-0.5">
                 Role
                 <span className="dev-badge">DEV ONLY</span>
@@ -360,7 +360,7 @@ const handleSubmit = async () => {
                   </svg>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Submit */}
             <div className="fade-up delay-6 pt-2">

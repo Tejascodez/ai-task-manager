@@ -310,7 +310,7 @@ export default function Dashboard() {
     setLoading(true);
     setNewTask(null);
     try {
-      const res = await fetch("http://localhost:8080/api/tasks", {
+      const res =  await fetch(`${BASE_URL}/api/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title }),
@@ -330,7 +330,7 @@ export default function Dashboard() {
 
   const updateStatus = async (id, status) => {
     try {
-      await fetch(`http://localhost:8080/api/tasks/${id}/status?status=${status}`, {
+      await fetch(`${BASE_URL}/api/tasks/${id}/status?status=${status}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
