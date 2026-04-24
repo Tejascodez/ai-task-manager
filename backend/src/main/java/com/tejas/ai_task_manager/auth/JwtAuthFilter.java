@@ -30,61 +30,76 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        System.out.println("JWT FILTER HIT");
+        // 1. Skip filter entirely for /auth/** — register/login need no token
+        if (request.getServletPath().startsWith("/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        // ✅ CORS (basic, fine for now)
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        // 2. Skip OPTIONS preflight — CORS is handled by SecurityConfig
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         final String authHeader = request.getHeader("Authorization");
-        System.out.println("Auth Header: " + authHeader);
 
+        // 3. No token → pass through (SecurityConfig enforces auth on protected routes)
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 4. Token exists — validate and set auth in context
         try {
-
-            // 🔹 No token → just continue
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
             String token = authHeader.substring(7);
 
             String email = jwtService.extractEmail(token);
             String role = jwtService.extractRole(token);
 
-            System.out.println("Extracted Email: " + email);
+            if (email != null && role != null
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // 🔹 Set authentication only if not already set
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                String cleanRole = role.trim().toUpperCase();
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 email,
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                List.of(new SimpleGrantedAuthority("ROLE_" + cleanRole))
                         );
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                System.out.println("Authentication set for: " + email);
             }
 
             filterChain.doFilter(request, response);
 
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            // Token expired — user must login again
+            SecurityContextHolder.clearContext();
+            sendUnauthorized(response, "Token has expired. Please login again.");
+
+        } catch (io.jsonwebtoken.JwtException e) {
+            // Token tampered or malformed
+            SecurityContextHolder.clearContext();
+            sendUnauthorized(response, "Invalid token.");
+
         } catch (Exception e) {
-            // 🔥 IMPORTANT: Handle expired/invalid JWT gracefully
-
-            System.out.println("JWT ERROR: " + e.getMessage());
-
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-
-            response.getWriter().write("""
-            {
-                "error": "Token expired or invalid"
-            }
-            """);
+            // Unexpected error — don't force 401, let Spring Security handle naturally
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
         }
+    }
+
+    private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("""
+            {
+                "error": "Unauthorized",
+                "message": "%s"
+            }
+            """.formatted(message));
     }
 }

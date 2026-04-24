@@ -4,6 +4,7 @@ import com.tejas.ai_task_manager.auth.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity          // ✅ enables @PreAuthorize on controllers
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -28,17 +30,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        System.out.println("🔥 CUSTOM SECURITY CONFIG LOADED");
-
         http
-            .cors(cors -> {}) // ✅ ENABLE CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
-                .anyRequest().permitAll() // (change later to authenticated)
+                .anyRequest().authenticated()   // ✅ lock down all other endpoints
             )
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(form -> form.disable())
@@ -47,15 +47,20 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 🔥 CORS CONFIG (THIS FIXES YOUR ERROR)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        // ✅ Allow both local dev and your deployed frontend
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173",   // Vite default
+            "http://localhost:3000",   // CRA default
+            "https://ai-task-manager-1-jttr.onrender.com"  // your deployed frontend URL — update this
+        ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*")); // 🔥 IMPORTANT
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

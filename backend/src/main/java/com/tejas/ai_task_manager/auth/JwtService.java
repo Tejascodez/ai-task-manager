@@ -28,9 +28,9 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractEmail(String token) {
-        return extractAllClaims(token).getSubject();
-    }
+        public String extractEmail(String token) {
+            return extractAllClaims(token).getSubject();
+        }
 
     public String extractRole(String token) {
         return extractAllClaims(token).get("role", String.class);

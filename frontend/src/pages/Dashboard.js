@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import BASE_URL from "../api/api";
 
 const PAGE_SIZE = 10;
 
@@ -272,8 +273,7 @@ export default function Dashboard() {
   const fetchTasks = useCallback(async (targetPage) => {
     setFetching(true);
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/tasks/my-tasks?page=${targetPage}&size=${PAGE_SIZE}`,
+      const res = await fetch(`${BASE_URL}/api/tasks/my-tasks?page=${targetPage}&size=${PAGE_SIZE}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.status === 401) { navigate("/login"); return; }
@@ -340,7 +340,7 @@ export default function Dashboard() {
 
   const assignTask = async (id, email) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/tasks/${id}/assign?email=${encodeURIComponent(email)}`, {
+      const res = await fetch(`${BASE_URL}/api/tasks/${id}/assign?email=${encodeURIComponent(email)}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });

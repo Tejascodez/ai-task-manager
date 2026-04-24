@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import BASE_URL from "../api/api";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "USER" });
@@ -7,6 +8,7 @@ export default function Register() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [strength, setStrength] = useState(0);
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const calcStrength = (pwd) => {
@@ -27,37 +29,41 @@ export default function Register() {
     setStrength(calcStrength(val));
   };
 
-  const handleSubmit = async () => {
-    if (!form.name || !form.email || !form.password) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    if (strength < 2) {
-      setError("Please choose a stronger password.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("http://localhost:8080/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+const handleSubmit = async () => {
+  if (!form.name || !form.email || !form.password) {
+    setError("Please fill in all fields.");
+    return;
+  }
+  if (strength < 2) {
+    setError("Please choose a stronger password.");
+    return;
+  }
+  setError("");
+  setLoading(true);
+  try {
+    const res = await fetch(`${BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
+      // ✅ role removed from payload too — not just UI
+    });
 
-      if (!res.ok) {
-        const msg = await res.text();
-        setError(msg || "Registration failed. Try again.");
-        setLoading(false);
-        return;
-      }
-
-      navigate("/login");
-    } catch {
-      setError("Server unreachable. Please try again.");
+    const data = await res.json().catch(() => ({})); // safe parse
+    
+    if (!res.ok) {
+      setError(data.message || "Registration failed. Try again.");
       setLoading(false);
+      return;
     }
-  };
+
+    setLoading(false);
+    navigate("/login");
+
+  } catch {
+    setError("Server unreachable. Please try again.");
+    setLoading(false);
+  }
+};
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSubmit();
