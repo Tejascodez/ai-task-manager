@@ -31,29 +31,35 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authorizeHttpRequests(auth -> auth
-                // ✅ Public endpoints
-                .requestMatchers(
-                    "/auth/**",
-                    "/manifest.json",
-                    "/favicon.ico",
-                    "/**/*.png",
-                    "/**/*.jpg",
-                    "/**/*.css",
-                    "/**/*.js"
-                ).permitAll()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
 
-                // 🔒 Secure everything else
-                .anyRequest().authenticated()
-            )
-            .httpBasic(httpBasic -> httpBasic.disable())
-            .formLogin(form -> form.disable())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        // 🔥 MUST: allow preflight requests
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 🔥 Explicitly allow register POST (extra safety)
+                        .requestMatchers("/auth/register").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+
+                        // ✅ other public files
+                        .requestMatchers(
+                                "/manifest.json",
+                                "/favicon.ico",
+                                "/**/*.png",
+                                "/**/*.jpg",
+                                "/**/*.css",
+                                "/**/*.js")
+                        .permitAll()
+
+                        // 🔒 secure rest
+                        .anyRequest().authenticated()
+
+                )
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(form -> form.disable())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
