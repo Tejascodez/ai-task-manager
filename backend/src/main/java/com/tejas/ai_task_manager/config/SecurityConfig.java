@@ -21,7 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity          // ✅ enables @PreAuthorize on controllers
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -37,8 +37,19 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .anyRequest().authenticated()   // ✅ lock down all other endpoints
+                // ✅ Public endpoints
+                .requestMatchers(
+                    "/auth/**",
+                    "/manifest.json",
+                    "/favicon.ico",
+                    "/**/*.png",
+                    "/**/*.jpg",
+                    "/**/*.css",
+                    "/**/*.js"
+                ).permitAll()
+
+                // 🔒 Secure everything else
+                .anyRequest().authenticated()
             )
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(form -> form.disable())
@@ -52,14 +63,13 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ Allow both local dev and your deployed frontend
-        config.setAllowedOrigins(List.of(
-            "http://localhost:5173",   // Vite default
-            "http://localhost:3000",   // CRA default
-            "https://ai-task-manager-git-main-tejas-projects-f859c7dd.vercel.app"));
+        // 🔥 IMPORTANT FIX: use patterns instead of exact origins
+        config.setAllowedOriginPatterns(List.of("*"));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-         config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+
+        // ⚠️ Required for JWT cookies / auth headers
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
