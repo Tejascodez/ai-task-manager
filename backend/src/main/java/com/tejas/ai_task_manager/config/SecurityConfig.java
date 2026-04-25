@@ -56,10 +56,10 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
             "http://localhost:5173",   // Vite default
             "http://localhost:3000",   // CRA default
-            "https://ai-task-manager-delta-sandy.vercel.app"));
+            "https://ai-task-manager-git-main-tejas-projects-f859c7dd.vercel.app"));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
