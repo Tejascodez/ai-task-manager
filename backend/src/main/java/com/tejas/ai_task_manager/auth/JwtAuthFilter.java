@@ -25,18 +25,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/auth")
+            || path.equals("/manifest.json")
+            || path.equals("/favicon.ico")
+            || path.matches(".*\\.(png|jpg|ico|css|js|webmanifest)$");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1. Skip filter entirely for /auth/** — register/login need no token
-        if (request.getServletPath().startsWith("/auth")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 2. Skip OPTIONS preflight — CORS is handled by SecurityConfig
+        // Skip OPTIONS preflight — CORS is handled by SecurityConfig
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -44,13 +47,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
-        // 3. No token → pass through (SecurityConfig enforces auth on protected routes)
+        // No token → pass through (SecurityConfig enforces auth on protected routes)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 4. Token exists — validate and set auth in context
+        // Token exists — validate and set auth in context
         try {
             String token = authHeader.substring(7);
 
@@ -76,12 +79,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            // Token expired — user must login again
             SecurityContextHolder.clearContext();
             sendUnauthorized(response, "Token has expired. Please login again.");
 
         } catch (io.jsonwebtoken.JwtException e) {
-            // Token tampered or malformed
             SecurityContextHolder.clearContext();
             sendUnauthorized(response, "Invalid token.");
 
